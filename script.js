@@ -7,29 +7,53 @@ document.addEventListener('DOMContentLoaded', () => {
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   /* ---------------------------------------------------------
-     Mobile nav toggle
+     Header: solid once the page scrolls past the dark hero
+  --------------------------------------------------------- */
+  const header = document.getElementById('siteHeader');
+  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---------------------------------------------------------
+     Mobile menu overlay
   --------------------------------------------------------- */
   const navToggle = document.getElementById('navToggle');
-  const mainNav = document.getElementById('mainNav');
+  const menuClose = document.getElementById('menuClose');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  const openMenu = () => {
+    mobileMenu.classList.add('open');
+    navToggle.classList.add('open');
+    navToggle.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('menu-lock');
+  };
+  const closeMenu = () => {
+    mobileMenu.classList.remove('open');
+    navToggle.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('menu-lock');
+  };
 
   navToggle.addEventListener('click', () => {
-    const open = mainNav.classList.toggle('open');
-    navToggle.classList.toggle('open', open);
-    navToggle.setAttribute('aria-expanded', open);
+    mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
   });
+  menuClose.addEventListener('click', closeMenu);
 
-  document.querySelectorAll('[data-nav]').forEach(link => {
-    link.addEventListener('click', () => {
-      mainNav.classList.remove('open');
-      navToggle.classList.remove('open');
-      navToggle.setAttribute('aria-expanded', 'false');
-    });
+  // Close on Escape, on any in-menu link tap, and if the viewport
+  // grows back to desktop size while the menu is open.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileMenu.classList.contains('open')) closeMenu();
+  });
+  mobileMenu.querySelectorAll('[data-nav]').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 760 && mobileMenu.classList.contains('open')) closeMenu();
   });
 
   /* ---------------------------------------------------------
      Scroll reveal for content blocks
   --------------------------------------------------------- */
-  const revealEls = document.querySelectorAll('.reveal');
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -39,10 +63,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, { threshold: 0.12 });
 
-  revealEls.forEach((el, i) => {
+  document.querySelectorAll('.reveal').forEach((el, i) => {
     el.style.transitionDelay = `${(i % 4) * 60}ms`;
     revealObserver.observe(el);
   });
+
+  /* ---------------------------------------------------------
+     Project placeholder grid — generated so every card stays
+     identical and easy to swap for real photography later.
+  --------------------------------------------------------- */
+  const projectGrid = document.getElementById('projectGrid');
+  if (projectGrid) {
+    const placeholderIcon = `
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
+        <circle cx="8.5" cy="10" r="1.6" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M3 16.5l5-4.5 3.5 3 4-4L21 15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 6; i++) {
+      const card = document.createElement('div');
+      card.className = 'photo-placeholder reveal';
+      card.innerHTML = `<span class="ph-icon" aria-hidden="true">${placeholderIcon}</span><span class="ph-label">Photo placeholder</span>`;
+      frag.appendChild(card);
+    }
+    projectGrid.appendChild(frag);
+    projectGrid.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.transitionDelay = `${(i % 4) * 60}ms`;
+      revealObserver.observe(el);
+    });
+  }
 
   /* ---------------------------------------------------------
      Contact form
@@ -108,3 +158,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
