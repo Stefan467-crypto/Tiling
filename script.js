@@ -10,26 +10,56 @@ document.addEventListener('DOMContentLoaded', () => {
      Header: solid once the page scrolls past the dark hero
   --------------------------------------------------------- */
   const header = document.getElementById('siteHeader');
-  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
+  const toTopBtn = document.getElementById('toTop');
+
+  const onScroll = () => {
+    header.classList.toggle('scrolled', window.scrollY > 40);
+  };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
+  if (toTopBtn) {
+    toTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+
   /* ---------------------------------------------------------
-     Mobile menu overlay
+     Keep --header-h in sync with the header's real rendered
+     height, so the hero/sections never sit underneath it even
+     if the brand text wraps on a narrow screen.
+  --------------------------------------------------------- */
+  const syncHeaderHeight = () => {
+    if (!header) return;
+    document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+  };
+  syncHeaderHeight();
+  window.addEventListener('resize', syncHeaderHeight);
+  window.addEventListener('load', syncHeaderHeight);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(syncHeaderHeight);
+  }
+  if (window.ResizeObserver && header) {
+    new ResizeObserver(syncHeaderHeight).observe(header);
+  }
+
+  /* ---------------------------------------------------------
+     Mobile menu — side drawer
   --------------------------------------------------------- */
   const navToggle = document.getElementById('navToggle');
   const menuClose = document.getElementById('menuClose');
   const mobileMenu = document.getElementById('mobileMenu');
+  const menuBackdrop = document.getElementById('menuBackdrop');
 
   const openMenu = () => {
     mobileMenu.classList.add('open');
-    navToggle.classList.add('open');
+    menuBackdrop.classList.add('open');
+    mobileMenu.setAttribute('aria-hidden', 'false');
     navToggle.setAttribute('aria-expanded', 'true');
     document.body.classList.add('menu-lock');
   };
   const closeMenu = () => {
     mobileMenu.classList.remove('open');
-    navToggle.classList.remove('open');
+    menuBackdrop.classList.remove('open');
+    mobileMenu.setAttribute('aria-hidden', 'true');
     navToggle.setAttribute('aria-expanded', 'false');
     document.body.classList.remove('menu-lock');
   };
@@ -38,9 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
   });
   menuClose.addEventListener('click', closeMenu);
+  menuBackdrop.addEventListener('click', closeMenu);
 
-  // Close on Escape, on any in-menu link tap, and if the viewport
-  // grows back to desktop size while the menu is open.
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && mobileMenu.classList.contains('open')) closeMenu();
   });
@@ -69,35 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ---------------------------------------------------------
-     Project placeholder grid — generated so every card stays
-     identical and easy to swap for real photography later.
-  --------------------------------------------------------- */
-  const projectGrid = document.getElementById('projectGrid');
-  if (projectGrid) {
-    const placeholderIcon = `
-      <svg viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
-        <circle cx="8.5" cy="10" r="1.6" stroke="currentColor" stroke-width="1.4"/>
-        <path d="M3 16.5l5-4.5 3.5 3 4-4L21 15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < 6; i++) {
-      const card = document.createElement('div');
-      card.className = 'photo-placeholder reveal';
-      card.innerHTML = `<span class="ph-icon" aria-hidden="true">${placeholderIcon}</span><span class="ph-label">Photo placeholder</span>`;
-      frag.appendChild(card);
-    }
-    projectGrid.appendChild(frag);
-    projectGrid.querySelectorAll('.reveal').forEach((el, i) => {
-      el.style.transitionDelay = `${(i % 4) * 60}ms`;
-      revealObserver.observe(el);
-    });
-  }
-
-  /* ---------------------------------------------------------
      Contact form
      ---------------------------------------------------------
-     Submits in the background to popovstefan647@gmail.com and
+     Submits in the background to tiletechltd1@gmail.com and
      shows a plain success/error message on this page — the
      visitor never leaves the site and never sees which relay
      service delivers the email.
@@ -105,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contactForm');
   const status = document.getElementById('formStatus');
   const submitBtn = document.getElementById('submitBtn');
-  const DESTINATION_EMAIL = 'popovstefan647@gmail.com';
+  const DESTINATION_EMAIL = 'tiletechltd1@gmail.com';
 
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -158,4 +161,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
-
